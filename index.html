@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+  :root{
+    --steel-900:#1c232b;
+    --steel-700:#31404e;
+    --steel-500:#4d6478;
+    --steel-100:#eef1f4;
+    --paper:#f5f4f0;
+    --ok-600:#2f7a4d;
+    --ok-100:#dff2e6;
+    --taken-600:#b5462f;
+    --taken-100:#f7e2dc;
+    --amber:#c88a1e;
+    --line:#d7dbe0;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0;background:var(--paper);font-family:var(--body);color:var(--steel-900);}
+  #app{max-width:1080px;margin:0 auto;padding:28px 20px 60px;}
+
+  .masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:3px solid var(--steel-900);padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;}
+  .masthead h1{font-family:var(--display);font-size:26px;font-weight:700;margin:0;letter-spacing:-0.01em;}
+  .masthead .sub{font-family:var(--mono);font-size:11.5px;color:var(--steel-500);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+  .counter-badge{font-family:var(--mono);background:var(--steel-900);color:var(--paper);padding:8px 14px;border-radius:3px;font-size:13px;white-space:nowrap;}
+  .counter-badge b{font-family:var(--display);font-size:16px;}
+
+  .tabs{display:flex;gap:2px;margin-bottom:20px;}
+  .tab-btn{flex:1;padding:11px 14px;border:none;background:var(--steel-100);color:var(--steel-500);font-family:var(--body);font-weight:600;font-size:13.5px;cursor:pointer;border-bottom:3px solid transparent;transition:.15s;}
+  .tab-btn.active{background:var(--paper);color:var(--steel-900);border-bottom:3px solid var(--amber);}
+  .tab-btn:focus-visible{outline:2px solid var(--steel-700);outline-offset:-2px;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px;margin-bottom:20px;}
+  .card h2{font-family:var(--display);font-size:15px;margin:0 0 16px;text-transform:uppercase;letter-spacing:.04em;color:var(--steel-700);}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){.grid-2{grid-template-columns:1fr;}}
+
+  @media (max-width:480px){
+    #app{padding:16px 12px 40px;}
+    .masthead{flex-direction:column;align-items:flex-start;gap:10px;}
+    .masthead h1{font-size:21px;}
+    .counter-badge{width:100%;text-align:center;}
+    .tab-btn{font-size:12px;padding:11px 6px;}
+    .card{padding:16px;}
+    .stats-row{gap:10px;}
+    .stat{min-width:calc(50% - 5px);flex:none;padding:12px;}
+    .stat .n{font-size:20px;}
+    .locker-filter{flex-direction:column;}
+    .locker-filter input,.locker-filter button{max-width:none;width:100%;}
+    .actions-row{flex-direction:column;}
+    .actions-row input,.actions-row button{max-width:none;width:100%;}
+    .locker-wall{grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:4px;}
+    .locker{font-size:10px;}
+  }
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--steel-500);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em;}
+  input[type=text],input[type=email],input[type=number],input[type=password]{
+    width:100%;padding:12px;border:1.5px solid var(--line);border-radius:4px;font-family:var(--body);font-size:16px;color:var(--steel-900);background:var(--steel-100);
+  }
+  input:focus{outline:none;border-color:var(--steel-700);background:#fff;}
+  .field{margin-bottom:16px;}
+
+  .selected-locker-strip{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--steel-100);border-radius:4px;margin-bottom:16px;font-family:var(--mono);font-size:13.5px;}
+  .selected-locker-strip .dot{width:10px;height:10px;border-radius:2px;background:var(--line);}
+  .selected-locker-strip.has-selection .dot{background:var(--ok-600);}
+
+  .submit-btn{width:100%;padding:13px;background:var(--steel-900);color:#fff;border:none;border-radius:4px;font-family:var(--display);font-weight:600;font-size:14.5px;cursor:pointer;letter-spacing:.02em;}
+  .submit-btn:disabled{background:var(--line);color:#9aa3ab;cursor:not-allowed;}
+  .submit-btn:not(:disabled):hover{background:var(--steel-700);}
+
+  .msg{padding:10px 14px;border-radius:4px;font-size:13.5px;margin-bottom:14px;font-weight:500;}
+  .msg.ok{background:var(--ok-100);color:var(--ok-600);}
+  .msg.err{background:var(--taken-100);color:var(--taken-600);}
+
+  .legend{display:flex;gap:18px;margin-bottom:14px;font-size:12.5px;color:var(--steel-500);flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend .sw{width:14px;height:14px;border-radius:2px;display:inline-block;}
+
+  .locker-filter{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .locker-filter input{max-width:180px;}
+
+  .section-label{font-family:var(--mono);font-size:11px;color:var(--steel-500);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px;padding-top:10px;border-top:1px dashed var(--line);}
+  .section-label:first-child{border-top:none;padding-top:0;margin-top:0;}
+
+  .locker-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:5px;}
+  .locker{
+    position:relative;aspect-ratio:3/4;border-radius:3px;cursor:pointer;
+    background:linear-gradient(180deg,#fff,var(--steel-100));
+    border:1.5px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    font-family:var(--mono);font-size:10.5px;color:var(--steel-500);padding-bottom:3px;
+    transition:.1s;
+  }
+  .locker::before{
+    content:"";position:absolute;top:4px;left:50%;transform:translateX(-50%);width:60%;height:2px;
+    background:repeating-linear-gradient(90deg,var(--line) 0 3px, transparent 3px 6px);
+  }
+  .locker.available:hover{border-color:var(--steel-700);transform:translateY(-1px);}
+  .locker.taken{background:linear-gradient(180deg,var(--taken-100),#fff);border-color:#e3bfb4;color:var(--taken-600);cursor:not-allowed;}
+  .locker.selected{background:linear-gradient(180deg,var(--ok-100),#fff);border-color:var(--ok-600);color:var(--ok-600);box-shadow:0 0 0 2px var(--ok-600) inset;}
+  .locker:focus-visible{outline:2px solid var(--steel-700);outline-offset:1px;}
+
+  .stats-row{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
+  .stat{flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
+  .stat .n{font-family:var(--display);font-size:24px;font-weight:700;}
+  .stat .l{font-size:11.5px;color:var(--steel-500);text-transform:uppercase;letter-spacing:.04em;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--steel-500);letter-spacing:.03em;}
+  tbody tr:hover{background:var(--steel-100);}
+  .table-wrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:4px;}
+
+  .actions-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .btn-sec{padding:9px 14px;background:var(--steel-100);border:1px solid var(--line);border-radius:4px;font-family:var(--body);font-weight:600;font-size:12.5px;cursor:pointer;color:var(--steel-900);}
+  .btn-sec:hover{background:#fff;border-color:var(--steel-700);}
+
+  .lock-gate{max-width:340px;margin:40px auto;text-align:center;}
+  .lock-gate p{font-size:13px;color:var(--steel-500);}
+
+  #qr-holder{display:flex;justify-content:center;padding:16px;background:#fff;border-radius:4px;margin-top:12px;}
+  .hint{font-size:12px;color:var(--steel-500);margin-top:6px;}
+</style>
+
+<div id="app">
+  <div class="masthead">
+    <div>
+      <h1>Registro de Casilleros</h1>
+      <div class="sub">Recursos Humanos · 898 casilleros</div>
+    </div>
+    <div class="counter-badge">Disponibles <b id="avail-count">—</b> / 898</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="registro">Formulario de registro</button>
+    <button class="tab-btn" data-tab="rh">Panel de RH</button>
+  </div>
+
+  <!-- ===================== TAB: REGISTRO (colaborador) ===================== -->
+  <div class="panel active" id="panel-registro">
+    <div class="card">
+      <h2>Tus datos</h2>
+      <div id="form-msg"></div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-emp">Número de empleado</label>
+          <input type="text" id="f-emp" placeholder="Ej. 10234" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="f-name">Nombre completo</label>
+          <input type="text" id="f-name" placeholder="Ej. Ana López Ramírez">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-mail">Correo electrónico</label>
+        <input type="email" id="f-mail" placeholder="nombre@empresa.com">
+      </div>
+
+      <div class="selected-locker-strip" id="sel-strip">
+        <span class="dot"></span>
+        <span id="sel-text">Ningún casillero seleccionado — elige uno abajo</span>
+      </div>
+
+      <button class="submit-btn" id="submit-btn" disabled>Registrar casillero</button>
+    </div>
+
+    <div class="card">
+      <h2>Elige tu casillero</h2>
+      <div class="legend">
+        <span><span class="sw" style="background:linear-gradient(180deg,#fff,var(--steel-100));border:1px solid var(--line)"></span>Disponible</span>
+        <span><span class="sw" style="background:var(--taken-100);border:1px solid #e3bfb4"></span>Ocupado</span>
+        <span><span class="sw" style="background:var(--ok-100);border:1px solid var(--ok-600)"></span>Tu selección</span>
+      </div>
+      <div class="locker-filter">
+        <input type="number" id="jump-input" placeholder="Ir al número...">
+        <button class="btn-sec" id="jump-btn">Buscar</button>
+        <button class="btn-sec" id="refresh-btn">Actualizar disponibilidad</button>
+      </div>
+      <div id="wall-holder"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: RH (admin) ===================== -->
+  <div class="panel" id="panel-rh">
+    <div class="lock-gate" id="rh-gate">
+      <div class="card">
+        <h2>Acceso de RH</h2>
+        <p>Ingresa el código de acceso del panel.</p>
+        <div class="field">
+          <input type="password" id="rh-pass" placeholder="Código de acceso">
+        </div>
+        <button class="submit-btn" id="rh-enter">Entrar</button>
+        <p class="hint">Código por defecto: <b>RH2026</b> — cámbialo en el código fuente del archivo.</p>
+      </div>
+    </div>
+
+    <div id="rh-content" style="display:none;">
+      <div class="stats-row">
+        <div class="stat"><div class="n" id="st-total">898</div><div class="l">Total de casilleros</div></div>
+        <div class="stat"><div class="n" id="st-taken">0</div><div class="l">Ocupados</div></div>
+        <div class="stat"><div class="n" id="st-avail">898</div><div class="l">Disponibles</div></div>
+        <div class="stat"><div class="n" id="st-regs">0</div><div class="l">Registros totales</div></div>
+      </div>
+
+      <div class="card">
+        <h2>Generar QR de acceso al formulario</h2>
+        <div class="field">
+          <label for="qr-url">URL pública de este formulario</label>
+          <input type="text" id="qr-url" placeholder="Pega aquí el enlace una vez publicado/compartido">
+        </div>
+        <button class="btn-sec" id="qr-make">Generar QR</button>
+        <div id="qr-holder"></div>
+        <p class="hint">Publica o comparte este archivo para obtener su enlace, pégalo aquí y genera el QR para imprimir o proyectar.</p>
+      </div>
+
+      <div class="card">
+        <h2>Base de datos de registros</h2>
+        <div class="actions-row">
+          <input type="text" id="rh-search" placeholder="Buscar por nombre, empleado, correo o casillero" style="max-width:320px;">
+          <button class="btn-sec" id="copy-csv">Copiar como CSV</button>
+          <button class="btn-sec" id="download-csv">Descargar CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Casillero</th><th>Núm. empleado</th><th>Nombre completo</th><th>Correo</th><th>Fecha de registro</th></tr></thead>
+            <tbody id="rh-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL_LOCKERS = 898;
+const STORAGE_KEY = 'lockers-registrations';
+const RH_PASSCODE = 'RH2026';
+
+let registrations = [];
+let selectedLocker = null;
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='rh') renderRH();
+  });
+});
+
+// ---------- Storage ----------
+async function loadRegistrations(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    registrations = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    registrations = [];
+  }
+}
+
+async function saveRegistrations(){
+  await window.storage.set(STORAGE_KEY, JSON.stringify(registrations), true);
+}
+
+function takenMap(){
+  const map = {};
+  registrations.forEach(r=> map[r.locker] = r);
+  return map;
+}
+
+// ---------- Locker wall ----------
+function buildWall(){
+  const holder = document.getElementById('wall-holder');
+  holder.innerHTML = '';
+  const taken = takenMap();
+  const sectionSize = 100;
+  for(let start=1; start<=TOTAL_LOCKERS; start+=sectionSize){
+    const end = Math.min(start+sectionSize-1, TOTAL_LOCKERS);
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = `Sección ${Math.ceil(start/sectionSize)} · Casilleros ${start}–${end}`;
+    holder.appendChild(label);
+
+    const wall = document.createElement('div');
+    wall.className = 'locker-wall';
+    for(let n=start; n<=end; n++){
+      const cell = document.createElement('div');
+      cell.className = 'locker ' + (taken[n] ? 'taken' : 'available');
+      cell.textContent = n;
+      cell.dataset.n = n;
+      cell.tabIndex = taken[n] ? -1 : 0;
+      if(!taken[n]){
+        cell.addEventListener('click', ()=>selectLocker(n));
+        cell.addEventListener('keydown', e=>{ if(e.key==='Enter') selectLocker(n); });
+      }
+      wall.appendChild(cell);
+    }
+    holder.appendChild(wall);
+  }
+  updateCounter();
+}
+
+function selectLocker(n){
+  selectedLocker = n;
+  document.querySelectorAll('.locker').forEach(c=>c.classList.remove('selected'));
+  const cell = document.querySelector(`.locker[data-n="${n}"]`);
+  if(cell) cell.classList.add('selected');
+  const strip = document.getElementById('sel-strip');
+  strip.classList.add('has-selection');
+  document.getElementById('sel-text').textContent = `Casillero seleccionado: N.º ${n}`;
+  validateForm();
+}
+
+function updateCounter(){
+  const takenCount = registrations.length;
+  document.getElementById('avail-count').textContent = TOTAL_LOCKERS - takenCount;
+}
+
+// ---------- Form ----------
+function validateForm(){
+  const emp = document.getElementById('f-emp').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const mail = document.getElementById('f-mail').value.trim();
+  const ok = emp && name && mail.includes('@') && selectedLocker;
+  document.getElementById('submit-btn').disabled = !ok;
+}
+['f-emp','f-name','f-mail'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', validateForm);
+});
+
+document.getElementById('submit-btn').addEventListener('click', async ()=>{
+  const emp = document.getElementById('f-emp').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const mail = document.getElementById('f-mail').value.trim();
+  const msgBox = document.getElementById('form-msg');
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+
+  await loadRegistrations(); // re-check freshest state to avoid two people taking same locker
+  const taken = takenMap();
+  if(taken[selectedLocker]){
+    msgBox.innerHTML = `<div class="msg err">Ese casillero ya fue tomado por otra persona. Elige otro.</div>`;
+    buildWall();
+    selectedLocker = null;
+    document.getElementById('sel-strip').classList.remove('has-selection');
+    document.getElementById('sel-text').textContent = 'Ningún casillero seleccionado — elige uno abajo';
+    return;
+  }
+  if(registrations.some(r=>r.employeeId===emp)){
+    msgBox.innerHTML = `<div class="msg err">Este número de empleado ya tiene un casillero registrado (N.º ${registrations.find(r=>r.employeeId===emp).locker}).</div>`;
+    validateForm();
+    return;
+  }
+
+  registrations.push({
+    employeeId: emp,
+    fullName: name,
+    email: mail,
+    locker: selectedLocker,
+    timestamp: new Date().toLocaleString('es-MX')
+  });
+  try{
+    await saveRegistrations();
+    msgBox.innerHTML = `<div class="msg ok">Registro guardado. Tu casillero es el N.º ${selectedLocker}.</div>`;
+  }catch(e){
+    msgBox.innerHTML = `<div class="msg err">No se pudo guardar el registro. Intenta de nuevo.</div>`;
+    registrations.pop();
+    validateForm();
+    return;
+  }
+
+  document.getElementById('f-emp').value='';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-mail').value='';
+  selectedLocker = null;
+  document.getElementById('sel-strip').classList.remove('has-selection');
+  document.getElementById('sel-text').textContent = 'Ningún casillero seleccionado — elige uno abajo';
+  buildWall();
+  validateForm();
+});
+
+document.getElementById('jump-btn').addEventListener('click', ()=>{
+  const n = parseInt(document.getElementById('jump-input').value, 10);
+  if(n>=1 && n<=TOTAL_LOCKERS){
+    const cell = document.querySelector(`.locker[data-n="${n}"]`);
+    if(cell) cell.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+});
+document.getElementById('refresh-btn').addEventListener('click', async ()=>{
+  await loadRegistrations();
+  buildWall();
+});
+
+// ---------- RH panel ----------
+document.getElementById('rh-enter').addEventListener('click', ()=>{
+  const val = document.getElementById('rh-pass').value;
+  if(val === RH_PASSCODE){
+    document.getElementById('rh-gate').style.display='none';
+    document.getElementById('rh-content').style.display='block';
+    renderRH();
+  }else{
+    document.getElementById('rh-pass').style.borderColor = 'var(--taken-600)';
+  }
+});
+
+async function renderRH(){
+  if(document.getElementById('rh-content').style.display==='none') return;
+  await loadRegistrations();
+  document.getElementById('st-total').textContent = TOTAL_LOCKERS;
+  document.getElementById('st-taken').textContent = registrations.length;
+  document.getElementById('st-avail').textContent = TOTAL_LOCKERS - registrations.length;
+  document.getElementById('st-regs').textContent = registrations.length;
+  paintTable(registrations);
+}
+
+function paintTable(rows){
+  const tbody = document.getElementById('rh-tbody');
+  tbody.innerHTML = '';
+  rows.slice().sort((a,b)=>a.locker-b.locker).forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.locker}</td><td>${escapeHtml(r.employeeId)}</td><td>${escapeHtml(r.fullName)}</td><td>${escapeHtml(r.email)}</td><td>${escapeHtml(r.timestamp)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('rh-search').addEventListener('input', e=>{
+  const q = e.target.value.toLowerCase();
+  const filtered = registrations.filter(r =>
+    String(r.locker).includes(q) ||
+    r.employeeId.toLowerCase().includes(q) ||
+    r.fullName.toLowerCase().includes(q) ||
+    r.email.toLowerCase().includes(q)
+  );
+  paintTable(filtered);
+});
+
+function toCSV(){
+  const header = 'Casillero,Numero de empleado,Nombre completo,Correo electronico,Fecha de registro';
+  const lines = registrations.slice().sort((a,b)=>a.locker-b.locker).map(r=>
+    [r.locker, r.employeeId, `"${r.fullName.replace(/"/g,'""')}"`, r.email, r.timestamp].join(',')
+  );
+  return [header, ...lines].join('\n');
+}
+
+document.getElementById('copy-csv').addEventListener('click', async ()=>{
+  const csv = toCSV();
+  try{
+    await navigator.clipboard.writeText(csv);
+    alert('CSV copiado. Pégalo directamente en Excel 2016 (Ctrl+V) — se acomodará en columnas automáticamente.');
+  }catch(e){
+    alert('No se pudo copiar automáticamente. Usa el botón "Descargar CSV" en su lugar.');
+  }
+});
+
+document.getElementById('download-csv').addEventListener('click', ()=>{
+  const csv = toCSV();
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'registro_casilleros.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('qr-make').addEventListener('click', ()=>{
+  const url = document.getElementById('qr-url').value.trim();
+  const holder = document.getElementById('qr-holder');
+  holder.innerHTML = '';
+  if(!url){ return; }
+  if(window.QRCode){
+    new QRCode(holder, { text:url, width:200, height:200, colorDark:'#1c232b', colorLight:'#ffffff' });
+  }else{
+    holder.textContent = 'No se pudo cargar el generador de QR.';
+  }
+});
+
+// ---------- Init ----------
+(async function init(){
+  await loadRegistrations();
+  buildWall();
+})();
+</script>
